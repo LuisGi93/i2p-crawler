@@ -5,6 +5,8 @@ import urlparse
 import json
 import sys
 import logging
+import socket
+import time
 
 class QuotesSpider1(scrapy.Spider):
 
@@ -13,8 +15,10 @@ class QuotesSpider1(scrapy.Spider):
     extractor_resources= LinkExtractor(tags=('img','script','audio'),attrs=('src','href'), deny_extensions=())
 
     visited_links=[]
-
-    def __init__(self, url_to_crawl=None):
+    
+    def __init__(self, url_to_crawl=None, *args, **kwargs):
+        super(QuotesSpider1, self).__init__(*args, **kwargs)
+        self.logger.error("Crawlllll %s", url_to_crawl)
         self.extracted_urls=[]
         #Obtenemos el dominio de la url
         self.start_urls  = [url_to_crawl] #A;adir mas semillas
@@ -22,11 +26,31 @@ class QuotesSpider1(scrapy.Spider):
         self.white_list_types=["text/plain", "text/html","text/xml"]
 
     def closed(self, reason):
-        self.logger.error("Links extraidos=[%s]", json.dumps(self.extracted_urls))
-        fh = open("spider1.txt","w")
-        fh.write(json.dumps(self.extracted_urls))
-        fh.close()
 
+        conn=False
+        sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+        while(not conn):
+            self.logger.error("Socket %s", sock)
+            self.logger.error("Conn %s", conn)
+            try:
+                sock.connect( ('127.0.0.1', 55616) )
+                conn=True
+            except:
+                 self.logger.debug("Waiting for the( server )")
+                 print 'Waiting for the( server'
+                 self.logger.error("Waiting for the( server")
+                 time.sleep(10)
+
+        result=sock.sendall(json.dumps(self.extracted_urls))
+
+        sock.flush()
+       # sock.send("$#END")
+        data=recv(20)
+        while data != "$#OK":
+
+            sock.sendall(json.dumps(self.extracted_urls))
+            sock.sendall("$#END")
+        sock.close()
 
     #Las unicas urls que entran aqui son las que queremos ver si contienen mas urls
     def extract_links(self,response):
