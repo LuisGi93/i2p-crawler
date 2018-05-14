@@ -18,9 +18,9 @@ class VisitedI2PWebpages(I2PWebpagesCommon):
         self.links_list={}
         self.cursor=cur
 
-        cur.execute("SELECT i2psites.name,visited_i2pwebpages.path_i2pwebpage FROM i2psites,visited_i2pwebpages WHERE i2psites.id = not_visited_i2pwebpages.id_i2psite")
+        cur.execute("SELECT i2psites.name,visited_i2pwebpages.path_i2pwebpage FROM i2psites,visited_i2pwebpages WHERE i2psites.id = visited_i2pwebpages.id_i2psite")
         visited_i2p_webpages=self.cursor.fetchall()
-        logging.debug('Extracting links to visit\n [%s]\n ', links) 
+        logging.debug('Extracting links to visit\n [%s]\n ', visited_i2p_webpages) 
         for i2p_link in visited_i2p_webpages:
             i2p_website=link[0]
             i2p_webpage=link[1]

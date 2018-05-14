@@ -40,9 +40,9 @@ class RelationsI2PWebpages(I2PWebpagesCommon):
         :param cur: A cursor for working with the database
         """
         self.cursor=cur
-        self.cursor.execute("SELECT id_source_webpage, id_destination_webpage,type FROM connection_between_webpages")
+        self.cursor.execute("SELECT id_source_i2pwebpage, id_destination_webpage,type FROM connection_between_webpages")
         connections=self.cursor.fetchall()
-        logging.debug('[BD] Extraidos relacion de links [%s].\n ', links) 
+        logging.debug('[BD] Extraidos relacion de links [%s].\n ', connections) 
         logging.debug('MAPA [%s]', self.links_list)
         for connection in connections:
             source_url=self.get_url_webpage(connection[0])

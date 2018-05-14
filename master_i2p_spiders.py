@@ -66,7 +66,7 @@ class SpiderManager():
         else:
             self.error_when_visiting_i2p_link(spider_id)
 
-    def error_when_visiting_link(self, spider_id)
+    def error_when_visiting_link(self, spider_id):
         self.stop_spider(spider_id)
         logging.error('Error arania :[%s] ', spider_id) 
 

@@ -20,11 +20,10 @@ class NotVisitedI2PWebpages(I2PWebpagesCommon):
         self.cursor=cur
         cur.execute("SELECT i2psites.name,not_visited_i2pwebpages.path_i2pwebpage FROM i2psites,not_visited_i2pwebpages WHERE i2psites.id = not_visited_i2pwebpages.id_i2psite")
         not_visited_i2p_webpages=self.cursor.fetchall()
-        logging.debug('Extracting links to visit\n [%s]\n ', links) 
+        logging.debug('Extracting links to visit\n [%s]\n ', not_visited_i2p_webpages) 
         for i2p_link in not_visited_i2p_webpages:
-            i2p_website=link[0]
-            i2p_webpage=link[1]
-            have_link=False
+            i2p_website=i2p_link[0]
+            i2p_webpage=i2p_link[1]
             if i2p_website not in self.links_list:
                 #Sitio web ha sido visitado
                 self.links_list[i2p_website]=[]
@@ -35,7 +34,7 @@ class NotVisitedI2PWebpages(I2PWebpagesCommon):
         logging.debug('Links to visit queue \n [%s]\n ', self.links_list) 
 
         self.cursor.execute("select i2psites.name from i2psites,queue_i2psites_with_not_visited_i2pwebpages where i2psites.id = queue_i2psites_with_not_visited_i2pwebpages.id_i2psite ORDER BY queue_i2psites_with_not_visited_i2pwebpages.pos_queue ASC")
-        self.queue_links=cursor.fetchall()
+        self.queue_links=self.cursor.fetchall()
         logging.debug('Cola sitios i2p sin visitar %s.\n ', self.queue_links) 
 
 
