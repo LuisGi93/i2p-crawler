@@ -12,7 +12,7 @@ class I2PWebpagesCommon():
         :param link: links to check
         :return: True if the links exists or False if not
         """
-        website= "{0.scheme}://{0.netloc}/".format(urlparse.urlsplit(link))
+        website= "{0.scheme}://{0.netloc}".format(urlparse.urlsplit(link))
         have_link=False
         if website in self.links_list:
             #Sitio web ha sido visitado

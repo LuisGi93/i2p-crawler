@@ -20,12 +20,12 @@ class RelationsI2PWebpages(I2PWebpagesCommon):
 
     def get_id_webpage(self,webpage):
 
-        website= "{0.scheme}://{0.netloc}/".format(urlparse.urlsplit(webpage))
+        website= "{0.scheme}://{0.netloc}".format(urlparse.urlsplit(webpage))
         path_i2pwebpage= "{0.path}".format(urlparse.urlsplit(webpage))
 
         self.cursor.execute("SELECT id FROM i2psites where name = %s",
         (website,))
-        id_website=cursor.fetchone()
+        id_website=cursor.fetchone()[0]
         self.cursor.execute("SELECT i2psite_webpages.id_i2p_webpage FROM i2psite_webpages WHERE i2psite_webpages.path_i2pwebpage = %s AND i2psite_webpages.id_i2psite=%s",
         (path_i2pwebpage, id_website,))
         query_result=cursor.fetchone()
@@ -49,7 +49,7 @@ class RelationsI2PWebpages(I2PWebpagesCommon):
             destination_url=self.get_url_webpage(connection[0])
             access_type=connection[2]
 
-            website= "{0.scheme}://{0.netloc}/".format(urlparse.urlsplit(destination_url))
+            website= "{0.scheme}://{0.netloc}".format(urlparse.urlsplit(destination_url))
             if website not in self.links_list:
                 #Sitio web ha sido visitado
                 self.links_list[website]=[]
@@ -62,11 +62,11 @@ class RelationsI2PWebpages(I2PWebpagesCommon):
     def create_relation_between_sites(self, url_source_i2psite, url_destination_website):
             self.cursor.execute("SELECT id FROM i2psites where name = %s",
             (url_source_i2psite,))
-            id_source_i2psite=cursor.fetchone()
+            id_source_i2psite=cursor.fetchone()[0]
 
             self.cursor.execute("SELECT id FROM i2psites where name = %s",
             (url_destination_website,))
-            id_destination_i2psite=cursor.fetchone()
+            id_destination_i2psite=cursor.fetchone()[0]
 
             query="INSERT INTO connection_between_sites ( id_source_i2psite, id_destionation_website) VALUES (%s,%s)"
             self.cursor.execute(query, (id_source_i2psite, id_destination_website,)) 
@@ -80,10 +80,10 @@ class RelationsI2PWebpages(I2PWebpagesCommon):
         :param destination_url: the url contained by source_url
         :param access_type: how source access destination (a, img, js, css...)
         """
-        source_i2psite= "{0.scheme}://{0.netloc}/".format(urlparse.urlsplit(source_url))
+        source_i2psite= "{0.scheme}://{0.netloc}".format(urlparse.urlsplit(source_url))
         if source_i2psite not in self.links_list:
             self.links_list[source_i2psite]={}
-            destination_website= "{0.scheme}://{0.netloc}/".format(urlparse.urlsplit(destination_url))
+            destination_website= "{0.scheme}://{0.netloc}".format(urlparse.urlsplit(destination_url))
             self.create_relation_between_sites(source_i2psite,destination_website)
         if source_url not  in self.links_list[source_i2psite]:
             #La url fuente no es conocidaccess_type))
@@ -114,7 +114,7 @@ class RelationsI2PWebpages(I2PWebpagesCommon):
         :param access_type: how source access destination (a, img, js, css...)
         """
         
-        website= "{0.scheme}://{0.netloc}/".format(urlparse.urlsplit(source_url))
+        website= "{0.scheme}://{0.netloc}".format(urlparse.urlsplit(source_url))
         dic={}
         dic[destination_url]=[access_type]
         self.links_list[website][source_url]=dic

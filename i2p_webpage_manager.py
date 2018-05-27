@@ -37,6 +37,7 @@ class I2PWebpageManager():
         :return: An  i2p link
         """
         link=self.not_visited_i2p_webpages.next_link()
+        '''
         if link is None:
             for start_link in self.start_urls:
                 been_visited=self.visited_i2p_webpages.contains(start_link) 
@@ -46,6 +47,8 @@ class I2PWebpageManager():
                     return start_link
         else:
             return link
+            '''
+        return link
 
 
 
@@ -72,7 +75,7 @@ class I2PWebpageManager():
         """
         ##Llamado cuando se ha visitado una nueva pagina  y se han extraido los enlaces que almacena
         for link, access_type in links.iteritems():
-            website= "{0.scheme}://{0.netloc}/".format(urlparse.urlsplit(link))
+            website= "{0.scheme}://{0.netloc}".format(urlparse.urlsplit(link))
             path_webpage= "{0.path}".format(urlparse.urlsplit(link))
             self.check_website_existence(website)
             #Cualquier link que pase por aqui su sitio web ya ha sido creado
@@ -86,7 +89,7 @@ class I2PWebpageManager():
             if not in_queue and not been_visited:
                 self.cursor.execute("SELECT id FROM i2psites where name = %s",
                 (website,))
-                id_i2psite=cursor.fetchone()
+                id_i2psite=cursor.fetchone()[0]
 
                 query="INSERT INTO i2psite_webpages (id_i2psite,path_i2pwebpage) VALUES (%s,%s)"
                 self.cursor.execute(query,(id_i2psite,path_webpage,)) 
@@ -112,9 +115,10 @@ class I2PWebpageManager():
             logging.debug('\n\n***Fin procesamiento links de webpage [%s] ***\n\n', i2p_visited_link ) 
     
     
-    def link_error(self,link):
-        website= "{0.scheme}://{0.netloc}/".format(urlparse.urlsplit(link))
-        self.not_visited_i2p_webpages.pull_back(website)
+    def i2p_link_error(self,link):
+        print(link)
+        i2p_site= "{0.scheme}://{0.netloc}".format(urlparse.urlsplit(link))
+        self.not_visited_i2p_webpages.pull_back(i2p_site)
 
 
 

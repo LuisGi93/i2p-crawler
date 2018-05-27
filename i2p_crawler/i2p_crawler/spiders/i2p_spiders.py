@@ -42,7 +42,7 @@ class I2PSpider(scrapy.Spider):#CAMBIAR
     Spider that extract all the links contained in a website
     """
     name = "i2p_spider_1"
-    i2p_links_extractor=I2PLinksExtractor()
+    links_extractor=I2PLinksExtractor()
     message_to_master={}#Cambiar nombre
     visited_links=[]
     custom_settings = {
@@ -58,14 +58,14 @@ class I2PSpider(scrapy.Spider):#CAMBIAR
         :param master_url: adres where the master is listening
         :param master_port:  port where the master is listening
         """
-        super(QuotesSpider1, self).__init__(*args, **kwargs)
+        super(I2PSpider, self).__init__(*args, **kwargs)
         self.logger.info("URL to crawl %s", url_to_crawl)
         #Obtenemos el dominio de la url
         self.starting_i2p_link  = [url_to_crawl] #A;adir mas semillas
         
         self.master_url = master_url #Cabiar a IP
         self.master_port  = int(master_port) #A;adir mas semillas
-        self.source_i2p_website= "{0.scheme}://{0.netloc}/".format(urlparse.urlsplit(url_to_crawl))
+        self.source_i2p_website= "{0.scheme}://{0.netloc}".format(urlparse.urlsplit(url_to_crawl))
         self.white_list_types=["text/plain", "text/html","text/xml"]
 
         self.message_to_master["url_to_crawl"]=url_to_crawl
@@ -76,7 +76,8 @@ class I2PSpider(scrapy.Spider):#CAMBIAR
         Start the crawling process
         """
         proxy = 'http://127.0.0.1:4444/'
-        yield scrapy.Request(url=self.starting_i2p_link, callback=self.parse, meta={'proxy': proxy})
+        #yield scrapy.Request(url=self.starting_i2p_link, callback=self.parse, meta={'proxy': proxy})
+        yield scrapy.Request(url='https://www.example.com', callback=self.parse, meta={'proxy': proxy})
 
     #Metodo llamado cuando se va a finalizar la ejecucion de la arania
 
@@ -91,7 +92,7 @@ class I2PSpider(scrapy.Spider):#CAMBIAR
 
         conn=False
         sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-        self.logger.info("Arania [%s]Informacion extraida [%s]",self.message_to_master["url_to_crawl"],send_data)
+        self.logger.info("Arania [%s]Informacion extraida [%s]",self.message_to_master["url_to_crawl"],self.message_to_master)
         time_wait=0
 
         while(not conn):
@@ -112,10 +113,10 @@ class I2PSpider(scrapy.Spider):#CAMBIAR
     def send_information_collected_to_master(self,sock):
 
         message_to_master_to_json=json.dumps(self.message_to_master)
-        size=len(message_to_master)
+        size=len(self.message_to_master)
 
         m=hashlib.sha256()
-        m.update(send_data)
+        m.update(message_to_master_to_json)
         hash_message=m.hexdigest()
         introductory_information={"url_to_crawl":self.starting_i2p_link[0], "data_size":size, "hash": hash_message}
         introductory_information_to_json=json.dumps(introductory_information)
@@ -128,7 +129,7 @@ class I2PSpider(scrapy.Spider):#CAMBIAR
         if introductory_information_to_json == received_message_from_master:
             sock.sendall("OK")
             self.logger.debug("Enviado OK")
-            sock.sendall(message_to_master_json)
+            sock.sendall(message_to_master_to_json)
         else:
             self.logger.debug("Enviado ERROR")
             sock.sendall("ERROR")
@@ -147,7 +148,7 @@ class I2PSpider(scrapy.Spider):#CAMBIAR
 
         i2p_links_to_visit=[]
         for link in links:
-            destination_website= "{0.scheme}://{0.netloc}/".format(urlparse.urlsplit(link.url)) 
+            destination_website= "{0.scheme}://{0.netloc}".format(urlparse.urlsplit(link.url)) 
             link_cleaned="{0.scheme}://{0.netloc}{0.path}".format(urlparse.urlsplit(link.url))
             if self.source_i2p_website == destination_website and link_cleaned not in self.visited_links:  
                 self.visited_links.append(link_cleaned)
@@ -211,12 +212,11 @@ class I2PSpider(scrapy.Spider):#CAMBIAR
         safe_to_scrape=self.check_if_valid_webpage(response)
         if safe_to_scrape:
             links=self.links_extractor.get_links(response)
-        i2p_links_visit_from_response=i2p_links_visit_from_response + self.process_links_to_visit(links["area"],response.url,"area") 
-        i2p_links_visit_from_response=i2p_links_visit_from_response + self.process_links_to_visit(links["a"],response.url,"a") 
-        self.process_links_not_visit(links["link"],response.url,"link")
-        self.process_links_not_visit(links["img"],response.url,"img")
-        self.process_links_not_visit(links["script"],response.url,"script")
-        self.process_links_not_visit(links["audio"],response.url,"audio")
+            i2p_links_visit_from_response=i2p_links_visit_from_response + self.process_links_to_visit(links["area"],response.url,"area") + self.process_links_to_visit(links["a"],response.url,"a")
+            self.process_links_not_visit(links["link"],response.url,"link")
+            self.process_links_not_visit(links["img"],response.url,"img")
+            self.process_links_not_visit(links["script"],response.url,"script")
+            self.process_links_not_visit(links["audio"],response.url,"audio")
 
         return i2p_links_visit_from_response
 

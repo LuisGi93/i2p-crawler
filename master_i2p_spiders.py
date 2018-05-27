@@ -14,6 +14,8 @@ import requests
 import json
 #To verify the integrity of the data sent by the spider
 import hashlib
+#In case of error, to sleep while the spider die
+import time
 
 from i2p_webpage_manager import I2PWebpageManager 
 
@@ -66,7 +68,7 @@ class SpiderManager():
         else:
             self.error_when_visiting_i2p_link(spider_id)
 
-    def error_when_visiting_link(self, spider_id):
+    def error_when_visiting_i2p_link(self, spider_id):
         self.stop_spider(spider_id)
         logging.error('Error arania :[%s] ', spider_id) 
 
@@ -80,8 +82,7 @@ class SpiderManager():
             message_to_dic= json.loads(raw_message_from_spider)
         except:
             message_to_dic= {}
-            logging.error('Datos recibidos [%s] error al pasarlos a formato', message_from_spider)
-            self.conection_with_spider.close()
+            logging.error('Datos recibidos [%s] error al pasarlos a formato', raw_message_from_spider)
         return message_to_dic
 
 
@@ -92,8 +93,6 @@ class SpiderManager():
         .
         Else it returns an empty dic
         """
-
-
         message_to_dic={}
         try:
             message_from_spider=conection_with_spider.recv(1024)
@@ -146,11 +145,14 @@ class SpiderManager():
             logging.info('Conexion establecida') 
             self.process_conection_with_spider(conection_with_spider)
             url_to_crawl=self.i2p_webpage_manager.get_link_to_visit()
-            logging.info('Proxima url a analizar [%s]\n ', url_to_crawl) 
-            response=self.send_url_spider(url_to_crawl)
-            logging.info('Lanzando arania con url [%s]\n. Info [%s] ', response,url_to_crawl) 
-            self.spiders["num_spiders"]=self.spiders["num_spiders"]+1
-            self.spiders[url_to_crawl]=response["jobid"]
+            if url_to_crawl:
+                logging.info('Proxima url a analizar [%s]\n ', url_to_crawl) 
+                response=self.send_url_spider(url_to_crawl)
+                logging.info('Lanzando arania con url [%s]\n. Info [%s] ', response,url_to_crawl) 
+                self.spiders["num_spiders"]=self.spiders["num_spiders"]+1
+                self.spiders[url_to_crawl]=response["jobid"]
+            else:
+                logging.info('No more links to visit') 
 
 
     def wait_spider_to_stop(self,id_spider):
@@ -158,7 +160,7 @@ class SpiderManager():
         time_wait=0
         stopped_spider=False
         while(stopped_spider == False):
-            response=json.loads(requests.get("http://localhost:6800/listjobs.json?project=i2p_crawler").json())
+            response=requests.get('http://localhost:6800/listjobs.json?project=i2p_crawler').json()
             if response["finished"]:
                 for job in response["finished"]:
                     if job["id"] == self.spiders[id_spider]:
@@ -172,14 +174,15 @@ class SpiderManager():
         params={'project': 'i2p_crawler', 'jobid':id_spider}
         response=requests.post("http://localhost:6800/cancel.json",data=params).json()
         self.wait_spider_to_stop(id_spider)
-        self.spiders[id_spider]
+        self.spiders.pop(id_spider)
         self.spiders["num_spiders"]=self.spiders["num_spiders"]-1
-        self.spiders.pop(data_to_dic["url_to_crawl"])
-        self.i2p_webpage_manager.link_error(data["url_to_crawl"])
+        self.i2p_webpage_manager.i2p_link_error(id_spider)
         return response
         
 
     def send_url_spider(self,url):
+
+        logging.info('Lanzando arania sobre [%s]\n ', url) 
         params={'project': 'i2p_crawler', 'spider':'i2p_spider_1', 'url_to_crawl':url, 'master_url':os.environ["URL_MASTER"] , 'master_port' :int(os.environ["MASTER_PORT"])}
         response=requests.post("http://localhost:6800/schedule.json",data=params).json()
         logging.debug('Arania lanzada [%s]\n Url a analizar [%s] ', response,url) 

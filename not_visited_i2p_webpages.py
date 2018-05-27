@@ -34,8 +34,13 @@ class NotVisitedI2PWebpages(I2PWebpagesCommon):
         logging.debug('Links to visit queue \n [%s]\n ', self.links_list) 
 
         self.cursor.execute("select i2psites.name from i2psites,queue_i2psites_with_not_visited_i2pwebpages where i2psites.id = queue_i2psites_with_not_visited_i2pwebpages.id_i2psite ORDER BY queue_i2psites_with_not_visited_i2pwebpages.pos_queue ASC")
-        self.queue_links=self.cursor.fetchall()
+        i2p_site_name_query=self.cursor.fetchall()
+        for query_result in i2p_site_name_query:
+            logging.debug('Nombre %s.\n ', query_result[0]) 
+            self.queue_links.append(query_result[0])
         logging.debug('Cola sitios i2p sin visitar %s.\n ', self.queue_links) 
+
+
 
 
     def next_link(self):
@@ -45,8 +50,8 @@ class NotVisitedI2PWebpages(I2PWebpagesCommon):
         """
         if len(self.queue_links) > 0: 
             website= self.queue_links[0]
-            self.queue_links.append(website)
             self.queue_links.remove(website)
+            self.queue_links.append(website)
             link=website+self.links_list[website][0]
         else:
             website= None
@@ -58,14 +63,14 @@ class NotVisitedI2PWebpages(I2PWebpagesCommon):
         Remove a link from queue
         :param link: link that is going to be removed  
         """
-        i2psite= "{0.scheme}://{0.netloc}/".format(urlparse.urlsplit(i2p_link))
+        i2psite= "{0.scheme}://{0.netloc}".format(urlparse.urlsplit(i2p_link))
         path_i2pwebpage= "{0.path}".format(urlparse.urlsplit(link))
         self.links_list[i2psite].remove(path_i2pwebpage)
 
 
         self.cursor.execute("SELECT id FROM i2psites where name = %s",
         (i2psite,))
-        id_i2psite=cursor.fetchone()
+        id_i2psite=cursor.fetchone()[0]
 
         query="DELETE FROM not_visited_i2pwebpages WHERE not_visited_i2pwebpages.path_i2pwebpage = (%s) AND not_visited_i2pwebpages.id_i2psite = (%s)"
         self.cursor.execute(query, (path_i2pwebpage,id_i2psite,)) 
@@ -77,6 +82,13 @@ class NotVisitedI2PWebpages(I2PWebpagesCommon):
             query="DELETE FROM queue_i2psites_with_not_visited_i2pwebpages WHERE id_i2psite=(%s)"
             self.cursor.execute(query, (id_i2psite,)) 
 
+
+    def pull_back(self,i2psite):
+        print(i2psite)
+        print(self.queue_links)
+        self.queue_links.remove(i2psite)
+        self.queue_links.append(i2psite)
+        logging.debug('Error with [%s], he is now at the end of the list', i2psite) 
 
 
 

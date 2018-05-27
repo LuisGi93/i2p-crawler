@@ -20,7 +20,7 @@ class VisitedI2PWebpages(I2PWebpagesCommon):
 
         cur.execute("SELECT i2psites.name,visited_i2pwebpages.path_i2pwebpage FROM i2psites,visited_i2pwebpages WHERE i2psites.id = visited_i2pwebpages.id_i2psite")
         visited_i2p_webpages=self.cursor.fetchall()
-        logging.debug('Extracting links to visit\n [%s]\n ', visited_i2p_webpages) 
+        logging.debug('Extracting links visited\n [%s]\n ', visited_i2p_webpages) 
         for i2p_link in visited_i2p_webpages:
             i2p_website=link[0]
             i2p_webpage=link[1]
@@ -37,7 +37,7 @@ class VisitedI2PWebpages(I2PWebpagesCommon):
         Add a new links to the visited links
         :param link: new links that is gonna be added
         """
-        i2psite= "{0.scheme}://{0.netloc}/".format(urlparse.urlsplit(i2p_link))
+        i2psite= "{0.scheme}://{0.netloc}".format(urlparse.urlsplit(i2p_link))
         path_i2pwebpage= "{0.path}".format(urlparse.urlsplit(link))
         logging.debug('STARTTT %s   ', self.start_urls) 
         if i2psite not in self.links_list: 
@@ -56,7 +56,7 @@ class VisitedI2PWebpages(I2PWebpagesCommon):
 
                 self.cursor.execute("SELECT id FROM i2psites where name = %s",
                 (i2psite,))
-                id_i2psite=cursor.fetchone()
+                id_i2psite=cursor.fetchone()[0]
 
                 query="INSERT INTO i2psite_webpages (id_i2psite,path_i2pwebpage) VALUES (%s,%s)"
                 self.cursor.execute(query,(id_i2psite,path_i2pwebpage,)) 
