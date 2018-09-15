@@ -1,11 +1,11 @@
 
-from i2p_webpages_common import I2PWebpagesCommon
+
 
 import logging
 import urlparse# Mirar si scrapy tiene funciones para parsear la url
 
 
-class VisitedI2PWebpages(I2PWebpagesCommon):
+class VisitedI2PWebpages():
     """
     Represent the previously visited links
     """
@@ -18,54 +18,72 @@ class VisitedI2PWebpages(I2PWebpagesCommon):
         self.links_list={}
         self.cursor=cur
 
-        cur.execute("SELECT i2psites.name,visited_i2pwebpages.path_i2pwebpage FROM i2psites,visited_i2pwebpages WHERE i2psites.id = visited_i2pwebpages.id_i2psite")
+        cur.execute("SELECT websites.name,visited_i2pwebpages.path_i2pwebpage FROM websites,visited_i2pwebpages WHERE websites.id = visited_i2pwebpages.id_i2psite")
         visited_i2p_webpages=self.cursor.fetchall()
-        logging.debug('Extracting links visited\n [%s]\n ', visited_i2p_webpages) 
-        for i2p_link in visited_i2p_webpages:
-            i2p_website=link[0]
-            i2p_webpage=link[1]
-            have_link=False
+        for i2p_visited_link in visited_i2p_webpages:
+            i2p_website=i2p_visited_link[0]
+            i2p_webpage=i2p_visited_link[1]
             if i2p_website not in self.links_list:
                 #Sitio web ha sido visitado
                 self.links_list[i2p_website]=[]
 
-            logging.debug('Links [%s] aniadido a la cola de visitar.\n ', i2p_webpage) 
             self.links_list[i2p_website].append(i2p_webpage)
 
-    def add(self,i2p_link):
+
+
+
+    def contains(self, i2page):
         """
-        Add a new links to the visited links
-        :param link: new links that is gonna be added
+        Check if a link exists in the queue of links
+        :param link: links to check
+        :return: True if the links exists or False if not
         """
-        i2psite= "{0.scheme}://{0.netloc}".format(urlparse.urlsplit(i2p_link))
-        path_i2pwebpage= "{0.path}".format(urlparse.urlsplit(link))
-        logging.debug('STARTTT %s   ', self.start_urls) 
-        if i2psite not in self.links_list: 
+        path_i2pwebpage= "{0.path}".format(urlparse.urlsplit(i2page))
+        query="{0.query}".format(urlparse.urlsplit(i2page))
+        if query:
+            path_i2pwebpage=path_i2pwebpage+"?"+query
+        website= "{0.scheme}://{0.netloc}".format(urlparse.urlsplit(i2page))
+        have_link=False
+        if website in self.links_list:
+            #Sitio web ha sido visitado
+            website_links=self.links_list[website]
+            if path_i2pwebpage in  website_links:
+                #El enlace ha sido visitado
+                have_link=True
+
+        return have_link
+
+    def add(self,i2page):
+        """
+        Add a new link to the pending links to visit
+        Returns the next link in queue to visit
+        :return: an url.
+        """
+
+        i2psite= "{0.scheme}://{0.netloc}".format(urlparse.urlsplit(i2page))
+        path_i2pwebpage= "{0.path}".format(urlparse.urlsplit(i2page))
+        query="{0.query}".format(urlparse.urlsplit(i2page))
+        if query:
+            path_i2pwebpage=path_i2pwebpage+"?"+query
+
+        logging.debug('Adding %s to visited   ', i2page)
+
+        if i2psite not in self.links_list:
             self.links_list[i2psite]=[]
 
-            if i2psite not in self.start_urls:
-                logging.debug('{DATABASE}Adding new i2psite [%s] to {i2psite}   ', i2p_link) 
-                query="INSERT INTO i2psites (i2psite) VALUES (%s)"
-                self.cursor.execute(query, (i2psite,)) 
-                logging.debug('{DATABASE} Added new website [%s] to {website}', i2p_link) 
+
+        self.cursor.execute("SELECT id FROM websites where name = %s",(i2psite,))
+        id_i2psite=self.cursor.fetchone()[0]
+
+        query="INSERT INTO visited_i2pwebpages (id_i2psite,path_i2pwebpage) VALUES (%s,%s)"
+        self.cursor.execute(query, (id_i2psite,path_i2pwebpage))
+        logging.debug('[%s] inserted into visited_webpage [%s]', path_i2pwebpage,i2psite, )
+
+        self.links_list[i2psite].append(path_i2pwebpage)
 
 
-        if i2p_link not in self.links_list[i2psite]:
-            if i2p_link not in self.start_urls:
-
-
-                self.cursor.execute("SELECT id FROM i2psites where name = %s",
-                (i2psite,))
-                id_i2psite=cursor.fetchone()[0]
-
-                query="INSERT INTO i2psite_webpages (id_i2psite,path_i2pwebpage) VALUES (%s,%s)"
-                self.cursor.execute(query,(id_i2psite,path_i2pwebpage,)) 
-                logging.debug('{DATABASE} Added new webpage:[%s] to website [%s]', link,website) 
-
-
-            logging.debug('Adding new url to visited links:\nUrl: [%s]\n Web [%s]  ', i2p_link, i2psite) 
-            self.links_list[i2psite].append(i2p_link)
-            query="INSERT INTO visited_i2pwebpages (id_i2psite,path_i2pwebpage) VALUES (%s,%s)"
-            self.cursor.execute(query, (id_i2psite,path_i2pwebpage)) 
-            logging.debug('[%s] inserted into not_visited_webpage [%s]', path,i2psite, )
-
+    def website_known(self,website):
+        in_queue=False
+        if website in self.links_list:
+           in_queue=True
+        return in_queue

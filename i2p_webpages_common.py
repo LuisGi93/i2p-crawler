@@ -5,7 +5,14 @@ class I2PWebpagesCommon():
     Represent a collection of links
     """
 
-    start_urls=['http://www.inr.i2p/','http://www.stats.i2p/', 'http://www.zzz.i2p/','http://www.forums.i2p/']
+    #start_urls=['http://www.inr.i2p','http://www.stats.i2p', 'http://www.zzz.i2p','http://www.forums.i2p', 'http://www.planet.i2p']
+    #start_urls=['http://www.echelon.i2p','http://www.secure.thetinhat.i2p','http://www.forums.i2p', 'http://www.planet.i2p']
+
+    #start_urls=['http://www.anoncoin.i2p','http://www.planet.i2p']
+    #start_urls=['http://www.i2pwiki.i2p']
+    #start_urls=['http://www.secure.thetinhat.i2p']
+    #start_urls=['http://www.i2pforum.i2p']
+    start_urls=[]
     def contains(self, link):
         """
         Check if a link exists in the queue of links
@@ -26,6 +33,5 @@ class I2PWebpagesCommon():
     def website_known(self,website):
         in_queue=False
         if website in self.links_list:
-           in_queue=True 
+           in_queue=True
         return in_queue
-
